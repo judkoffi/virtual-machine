@@ -108,7 +108,12 @@ public class ASTInterpreter {
         return UNDEFINED;
       })
       .when(MethodCall.class, (methodCall, env) -> {
-        throw new UnsupportedOperationException("TODO MethodCall");
+        var receiver = visit(methodCall.receiver(), env);
+        var pConverted = as(receiver, JSObject.class, methodCall);
+        var method = pConverted.lookup(methodCall.name());
+        var mConverted = as(method, JSObject.class, methodCall);
+        var arguments = methodCall.args().stream().map(arg -> visit(arg, env)).toArray();
+        return mConverted.invoke(pConverted, arguments);
       });
 
   @SuppressWarnings("unchecked")
