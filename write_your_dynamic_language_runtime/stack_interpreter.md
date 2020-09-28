@@ -83,15 +83,16 @@ the second optional value is a value that depend on the kind of opcodes.
  
  `print(2 + 10)` is translated to
  ```
- 0: LOOKUP encodeDictObject("+", dict) 
- 2: CONST encodeDictObject(UNDEFINED, dict)
+ 0: LOOKUP encodeDictObject("+", dict) => (+ est une fonction)
+ 2: CONST encodeDictObject(UNDEFINED, dict) => (<=> this)
  4: CONST encodeSmallInt(2)
  6: CONST encodeSmallInt(10)
- 8: FUNCALL 2
+ 8: FUNCALL 2 (=> 2 : nombre d'arguments)
 10: PRINT
  ```
  
- `a = 2; b = a; print(b)`
+ `a = 2; b = a; print(b)` 
+ `a => 1;  b => 2; this => 0`
 ```
  0: CONST encodeSmallInt(2)
  2: STORE 1
@@ -130,7 +131,6 @@ is transformed to the following opcodes.
 // code of function f
  0: LOAD 2
  2: PRINT
- 3: POP
  4: CONST encodeDictObject(UNDEFINED, dict)
  6: RET
  
