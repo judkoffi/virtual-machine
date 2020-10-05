@@ -1,7 +1,8 @@
 package fr.umlv.smalljs.stackinterp;
 
-import static fr.umlv.smalljs.rt.JSObject.UNDEFINED;
-import static fr.umlv.smalljs.stackinterp.TagValues.*;
+import fr.umlv.smalljs.ast.Script;
+import fr.umlv.smalljs.rt.Failure;
+import fr.umlv.smalljs.rt.JSObject;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -9,9 +10,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import fr.umlv.smalljs.ast.Script;
-import fr.umlv.smalljs.rt.Failure;
-import fr.umlv.smalljs.rt.JSObject;
+import static fr.umlv.smalljs.rt.JSObject.UNDEFINED;
+import static fr.umlv.smalljs.stackinterp.TagValues.*;
 
 public class StackInterpreter {
   private static void push(int[] stack, int sp, int value) {
@@ -155,15 +155,15 @@ public class StackInterpreter {
           --sp;
         }
         case Instructions.SWAP -> {
-          throw new UnsupportedOperationException("TODO SWAP");
+//          throw new UnsupportedOperationException("TODO SWAP");
           // pop first value from the stack
-          //var value1 = ...
+          var value1 = pop(stack, --sp);
           // pop second value from the stack
-          //var value2 = ...
+          var value2 = pop(stack, --sp);
           // push first value on top of the stack
-          //push(...);
+          push(stack, sp++, value1);
           // push second value on top of the stack
-          //push(...);
+          push(stack, sp++, value2);
         }
         case Instructions.FUNCALL -> {
           //throw new UnsupportedOperationException("TODO FUNCALL");
@@ -313,66 +313,69 @@ public class StackInterpreter {
             dumpHeap("after GC ", heap, hp, dict);
           }
 
-          //var ref = hp;
+          var ref = hp;
 
           // write the class on heap
-          //heap[ref] = ...
+          heap[ref] = encodeDictObject(clazz, dict);
           // write the empty GC mark
-          //heap[ref + GC_OFFSET] = GC_EMPTY;
+          heap[ref + GC_OFFSET] = GC_EMPTY;
           // get all fields values from the stack and write them on heap
-          //var baseArg = ...;
-          //for (var i = 0; i < clazz.length(); i++) {
-          //	heap[ref + OBJECT_HEADER_SIZE + i] = stack[baseArg + i];
-          //}
+          var baseArg = sp - clazz.length();
+          for (var i = 0; i < clazz.length(); i++) {
+            heap[ref + OBJECT_HEADER_SIZE + i] = stack[baseArg + i];
+          }
           // adjust stack pointer and heap pointer
-          //sp = ...
-          //hp += ...
+          sp += baseArg;
+          // hp += 1;
+          hp += clazz.length() + OBJECT_HEADER_SIZE;
 
           // push the reference on top of the stack
-          //push(...);
+          push(stack, sp, ref);
         }
         case Instructions.GET -> {
-          throw new UnsupportedOperationException("TODO GET");
+          //throw new UnsupportedOperationException("TODO GET");
           // get field name from the instructions
-          //var fieldName = (String) ...
+          var fieldName = (String) decodeDictObject(instrs[pc++], dict);
 
           // get reference from the top of the stack
-          //var ref = decodeReference(...);
+          var ref = decodeReference(pop(stack, --sp));
           // get class on heap from the reference
-          //var vClass = ...;
+          var vClass = heap[ref];
           // get JSObject from class
-          //var clazz = (JSObject) decodeDictObject(vClass, dict);
+          var clazz = (JSObject) decodeDictObject(vClass, dict);
           // get field slot from JSObject
-          //var slot = clazz.lookup(fieldName);
-          //if (slot == UNDEFINED) {
-          //	// no slot, push undefined
-          //	push(..);
-          //	continue;
-          //}
+          var slot = clazz.lookup(fieldName);
+          if (slot == UNDEFINED) {
+            // no slot, push undefined
+            push(stack, sp++, undefined);
+            continue;
+          }
 
           // push field value on top of the stack
-          //push(...);
+          var fieldAddr = ref + OBJECT_HEADER_SIZE + (int) slot;
+          push(stack, sp++, heap[fieldAddr]);
         }
         case Instructions.PUT -> {
-          throw new UnsupportedOperationException("TODO PUT");
+          //throw new UnsupportedOperationException("TODO PUT");
           // get field name from the instructions
-          // var fieldName = (String) ...
+          var fieldName = (String) decodeDictObject(instrs[pc++], dict);
           // get new value from the top of the stack
-          //var value = ...
+          var value = pop(stack, --sp);
           // get reference from the top of the stack
-          // var ref = decodeReference(...);
+          var ref = decodeReference(pop(stack, --sp));
           // get class on heap from the reference
-          //var vClass = heap[ref];
+          var vClass = heap[ref];
           // get JSObject from class
-          //var clazz = (JSObject) decodeDictObject(vClass, dict);
+          var clazz = (JSObject) decodeDictObject(vClass, dict);
           // get field slot from JSObject
-          //var slot = clazz.lookup(fieldName);
-          //if (slot == UNDEFINED) {
-          //	throw new Failure("invalid field " + fieldName);
-          //}
+          var slot = clazz.lookup(fieldName);
+          if (slot == UNDEFINED) {
+            throw new Failure("invalid field " + fieldName);
+          }
 
           // store field value from the top of the stack on heap
-          //heap[...] = ...;
+          var index = ref + OBJECT_HEADER_SIZE + (int) slot;
+          heap[index] = value;
         }
         case Instructions.PRINT -> {
           //throw new UnsupportedOperationException("TODO PRINT");
@@ -401,7 +404,9 @@ public class StackInterpreter {
     globalEnv.register("global", globalEnv);
     globalEnv.register("print", JSObject.newFunction("print", (self, receiver, args) -> {
       System.err.println("print called with " + Arrays.toString(args));
-      outStream.println(Arrays.stream(args).map(Object::toString).collect(Collectors.joining(" ")));
+      outStream.println(Arrays.stream(args)
+        .map(Object::toString)
+        .collect(Collectors.joining(" ")));
       return UNDEFINED;
     }));
     globalEnv.register("+", JSObject.newFunction("+", (self, receiver, args) -> (Integer) args[0] + (Integer) args[1]));
@@ -430,5 +435,8 @@ public class StackInterpreter {
     var function = InstrRewriter.createFunction(Optional.of("main"), Collections.emptyList(), body, new Dictionary(),
       globalEnv);
     function.invoke(UNDEFINED, new Object[0]);
+  }
+
+  public static void printStackTrace() {
   }
 }

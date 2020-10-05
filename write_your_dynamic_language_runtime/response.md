@@ -18,3 +18,6 @@ Notes:
 - To call it, we can just call method <i>visit</i> on Visitor objet. For a recursive call, we can just recall visit method in visit method  
 - 
   
+
+Ex1: InstrRewriter
+1) le VARIABLE_VISITOR peut de parcourir les instructions

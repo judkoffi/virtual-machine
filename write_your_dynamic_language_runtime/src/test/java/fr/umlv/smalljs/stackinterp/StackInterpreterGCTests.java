@@ -29,55 +29,60 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("static-method")
 public class StackInterpreterGCTests {
-	private static JSObject newMainFunction(Code code) {
+  private static JSObject newMainFunction(Code code) {
     var fun = JSObject.newFunction("main", (self, receiver, args) -> {
-    	      throw new Failure("native call not supported");
-        }
+        throw new Failure("native call not supported");
+      }
     );
     fun.register("__code__", code);
     return fun;
   }
+
   private static String execute(Code mainCode, Dictionary dict) {
     var outStream = new ByteArrayOutputStream(8192);
     var globalEnv = StackInterpreter.createGlobalEnv(new PrintStream(outStream));
     var mainFun = newMainFunction(mainCode);
     globalEnv.register("main", mainFun);
     StackInterpreter.execute(mainFun, dict, globalEnv);
-    return outStream.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
+    return outStream.toString(StandardCharsets.UTF_8)
+      .replace("\r\n", "\n");
   }
 
-//  @Tag("Q2") @Test
-//  public void gcTest() {
-//  	var dict = new Dictionary();
-//  	var pointClass = JSObject.newObject(null);
-//  	pointClass.register("x", 0);
-//  	pointClass.register("y", 1);
-//  	int[] instrs = {
-//  		/* 0:*/ CONST, encodeSmallInt(100),
-//  	  /* 2:*/ STORE, 1,
-//
-//  	  /* 4:*/ LOAD, 1,
-//  	  /* 6:*/ JUMP_IF_FALSE, 29,
-//
-//  	  /* 8:*/ CONST, encodeSmallInt(1),
-//  	  /*10:*/ CONST, encodeSmallInt(2),
-//  	  /*12:*/ NEW, encodeDictObject(pointClass, dict),
-//  	  /*14:*/ POP,
-//
-//  	  /*15:*/ LOOKUP, encodeDictObject("-", dict),
-//  	  /*17:*/ CONST, encodeDictObject(UNDEFINED, dict),
-//  	  /*19:*/ LOAD, 1,
-//  	  /*21:*/ CONST, encodeSmallInt(1),
-//  	  /*23:*/ FUNCALL, 2,
-//  	  /*25:*/ STORE, 1,
-//
-//  	  /*27:*/ GOTO, 4,
-//
-//  	  /*29:*/ CONST, encodeDictObject(UNDEFINED, dict),
-//  	  /*31:*/ RET
-//  	};
-//    execute(new Code(instrs, 1, 2), dict);
-//  }
+  @Tag("Q2")
+  @Test
+  public void gcTest() {
+    var dict = new Dictionary();
+    var pointClass = JSObject.newObject(null);
+    pointClass.register("x", 0);
+    pointClass.register("y", 1);
+    int[] instrs = {
+      /* 0:*/ CONST, encodeSmallInt(100),
+      /* 2:*/ STORE, 1,
+
+      /* 4:*/ LOAD, 1,
+      /* 6:*/ JUMP_IF_FALSE, 29,
+
+      /* 8:*/ CONST, encodeSmallInt(1),
+      /*10:*/ CONST, encodeSmallInt(2),
+      /*12:*/ NEW, encodeDictObject(pointClass, dict),
+      /*14:*/ POP,
+
+      /*15:*/ LOOKUP, encodeDictObject("-", dict),
+      /*17:*/ CONST, encodeDictObject(UNDEFINED, dict),
+      /*19:*/ LOAD, 1,
+      /*21:*/ CONST, encodeSmallInt(1),
+      /*23:*/ FUNCALL, 2,
+      /*25:*/ STORE, 1,
+
+      /*27:*/ GOTO, 4,
+
+      /*29:*/ CONST, encodeDictObject(UNDEFINED, dict),
+      /*31:*/ RET
+    };
+    var code = new Code(instrs, 1, 2);
+    StackInterpreter.printStackTrace(code);
+    execute(code, dict);
+  }
 //
 //  @Tag("Q3") @Test
 //  public void gcTestRewriteField() {
