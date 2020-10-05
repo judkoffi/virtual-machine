@@ -285,35 +285,33 @@ public class StackInterpreter {
           dumpStack("> end ret dump", stack, sp, bp, dict, heap);
         }
         case Instructions.GOTO -> {
-          throw new UnsupportedOperationException("TODO GOTO");
+          //throw new UnsupportedOperationException("TODO GOTO");
           // change the program counter to the label
-          //pc = ...
+          pc = instrs[pc++];
         }
         case Instructions.JUMP_IF_FALSE -> {
-          throw new UnsupportedOperationException("TODO JUMP_IF_FALSE");
+//          throw new UnsupportedOperationException("TODO JUMP_IF_FALSE");
           // get the label
-          //var label = ...
+          var label = instrs[pc++];
           // get the value on top of the stack
-          //var condition = ...
+          var condition = peek(stack, sp);
           // if condition is false change the program counter to the label
-          //if (condition == TagValues.FALSE) {
-          //	pc = label;
-          //}
+          if (condition == TagValues.FALSE) {
+            pc = label;
+          }
         }
         case Instructions.NEW -> {
-          throw new UnsupportedOperationException("TODO NEW");
+//          throw new UnsupportedOperationException("TODO NEW");
           // get the class from the instructions
-          //var vClass = instrs[pc++];
-          //var clazz = (JSObject) ...;
+          var vClass = instrs[pc++];
+          var clazz = (JSObject) decodeDictObject(vClass, dict);
 
           // out of memory ?
-          //if (hp + OBJECT_HEADER_SIZE + clazz.length() >= heap.length) {
-          //dumpHeap("before GC ", heap, hp, dict);
-
-          //throw new UnsupportedOperationException("TODO !!! GC !!!")
-
-          //dumpHeap("after GC ", heap, hp, dict);
-          //}
+          if (hp + OBJECT_HEADER_SIZE + clazz.length() >= heap.length) {
+            dumpHeap("before GC ", heap, hp, dict);
+            //throw new UnsupportedOperationException("TODO !!! GC !!!")
+            dumpHeap("after GC ", heap, hp, dict);
+          }
 
           //var ref = hp;
 
