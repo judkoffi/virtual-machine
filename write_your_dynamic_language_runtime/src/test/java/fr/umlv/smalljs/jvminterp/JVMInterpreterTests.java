@@ -21,263 +21,314 @@ public class JVMInterpreterTests {
     var script = createScript(new StringReader(code));
     var outStream = new ByteArrayOutputStream(8192);
     JVMInterpreter.interpret(script, new PrintStream(outStream));
-    return outStream.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
+    return outStream.toString(StandardCharsets.UTF_8)
+      .replace("\r\n", "\n");
   }
 
-  /*
-  @Tag("Q2") @Test
+  @Tag("Q2")
+  @Test
   public void helloString() {
     assertEquals("", execute("\"hello\"\n"));
   }
 
-  @Tag("Q3") @Test
+
+  @Tag("Q3")
+  @Test
   public void integer3() {
     assertEquals("", execute("3\n"));
   }
-  
-  @Tag("Q4") @Test
+
+
+  @Tag("Q4")
+  @Test
   public void print() {
     assertEquals("hello\n", execute("print(\"hello\")\n"));
     assertEquals("foobar\n", execute("print('foobar')\n"));
     assertEquals("3\n", execute("print(3)\n"));
   }
-  
-  @Tag("Q5") @Test
+
+
+  @Tag("Q5")
+  @Test
   public void printPrint() {
     assertFalse(execute("print(print)\n").isEmpty());
   }
-  
-  @Tag("Q6") @Test
+
+  @Tag("Q6")
+  @Test
   public void printOperations() {
     assertEquals("5\n", execute("print(3 + 2)\n"));
     assertEquals("1\n", execute("print(3 - 2)\n"));
     assertEquals("6\n", execute("print(3 * 2)\n"));
     assertEquals("1\n", execute("print(3 / 2)\n"));
   }
-  
-  @Tag("Q7") @Test
+
+
+  @Tag("Q7")
+  @Test
   public void printPrint3() {
     assertEquals("3\nundefined\n", execute("print(print(3))\n"));
   }
-  
-  @Tag("Q8") @Test
+
+
+  @Tag("Q8")
+  @Test
   public void printAVariable() {
     assertEquals("3\n", execute("""
-            var a = 3;
-            print(a);
-            """));
+      var a = 3;
+      print(a);
+      """));
   }
-  @Tag("Q8") @Test
+
+
+  @Tag("Q8")
+  @Test
   public void printSeveralVariables() {
     assertEquals("7\n", execute("""
-            var a = 3;
-            var b = 4;
-            print(a + b);
-            """));
+      var a = 3;
+      var b = 4;
+      print(a + b);
+      """));
   }
-  @Tag("Q8") @Test
+
+  @Tag("Q8")
+  @Test
   public void printSeveralAssignments() {
     assertEquals("42\n42\n", execute("""
-            var a = 42;
-            var b = a;
-            print(a);
-            print(b);
-            """));
+      var a = 42;
+      var b = a;
+      print(a);
+      print(b);
+      """));
   }
-  @Tag("Q8") @Test
+
+  @Tag("Q8")
+  @Test
   public void printSeveralArguments() {
     assertEquals("hello Bob\n", execute("""
-            var me = 'Bob';
-            print('hello', me);
-            """));
+      var me = 'Bob';
+      print('hello', me);
+      """));
   }
-  
-  @Tag("Q9") @Test
+
+  @Tag("Q9")
+  @Test
   public void printAVariableDefinedAfter() {
     assertEquals("undefined\n", execute("print(a);\nvar a = 2;\n"));
   }
-  
-  @Tag("Q10") @Test
+
+  @Tag("Q10")
+  @Test
   public void callAUserDefinedFunctionAndPrint() {
     assertEquals("3\n", execute("""
-            function foo(x) {
-              return x + 1;
-            }
-            print(foo(2));
-            """));
+      function foo(x) {
+        return x + 1;
+      }
+      print(foo(2));
+      """));
   }
-  @Tag("Q10") @Test
+
+  @Tag("Q10")
+  @Test
   public void callAUserDefinedFunctionWithTheWrongNumberOfArguments() {
     assertThrows(Failure.class, () -> execute("""
-            function foo(a, b) {
-            }
-            print(foo(2));
-            """));
+      function foo(a, b) {
+      }
+      print(foo(2));
+      """));
   }
-  @Tag("Q10") @Test
+
+  @Tag("Q10")
+  @Test
   public void callSeveralFunctions() {
     assertEquals("foo\nbar\n", execute("""
-            function foo() {
-              print('foo');
-              bar();
-            }
-            function bar() {
-              print('bar');
-            }
-            foo();
-            """));
+      function foo() {
+        print('foo');
+        bar();
+      }
+      function bar() {
+        print('bar');
+      }
+      foo();
+      """));
   }
-  @Tag("Q10") @Test
+
+  @Tag("Q10")
+  @Test
   public void callVariableFunction() {
     assertEquals("6\n6\n", execute("""
-            var foo = function bar(x) {
-              return x * 2;}
-            print(foo(3));
-            print(bar(3));
-            """));
+      var foo = function bar(x) {
+        return x * 2;}
+      print(foo(3));
+      print(bar(3));
+      """));
   }
-  @Tag("Q10") @Test
+
+  @Tag("Q10")
+  @Test
   public void callVariableFunction2() {
     assertEquals("6\n", execute("""
-            var foo = function (x) {
-              return x * 2;}
-            print(foo(3));
-            """));
+      var foo = function (x) {
+        return x * 2;}
+      print(foo(3));
+      """));
   }
-  @Tag("Q10") @Test
+
+  @Tag("Q10")
+  @Test
   public void callFunctionWithNoReturn() {
     assertEquals("undefined\n", execute("""
-            function undef() { }
-            print(undef());
-            """));
+      function undef() { }
+      print(undef());
+      """));
   }
-  
-  @Tag("Q11") @Test
+
+
+  @Tag("Q11")
+  @Test
   public void printWithAnIf() {
     assertEquals("false\n", execute("""
-            var a = 2;
-            if (a == 3) {
-              print("true");
-            } else {
-              print("false");
-            }
-            """));
+      var a = 2;
+      if (a == 3) {
+        print("true");
+      } else {
+        print("false");
+      }
+      """));
   }
-  @Tag("Q11") @Test
+
+
+  @Tag("Q11")
+  @Test
   public void printWithAnIf2() {
     assertEquals("true\n", execute("""
-            var a = 3;
-            if (a == 3) {
-              print("true");
-            } else {
-              print("false");
-            }
-            """));
+      var a = 3;
+      if (a == 3) {
+        print("true");
+      } else {
+        print("false");
+      }
+      """));
   }
-  @Tag("Q11") @Test
+
+  @Tag("Q11")
+  @Test
   public void printVariableWeirdScope() {
     assertEquals("false\nundefined\n", execute("""
-            var a = 2;
-            if (a == 3) {
-              print("true");
-              var b = 'hello';
-            } else {
-              print("false");
-            }
-            print(b);"""));
+      var a = 2;
+      if (a == 3) {
+        print("true");
+        var b = 'hello';
+      } else {
+        print("false");
+      }
+      print(b);"""));
   }
-  @Tag("Q11") @Test
+
+  @Tag("Q11")
+  @Test
   public void printVariableWeirdScope2() {
     assertEquals("true\nhello\n", execute("""
-            var a = 3;
-            if (a == 3) {
-              print("true");
-              var b = 'hello';
-            } else {
-              print("false");
-            }
-            print(b);"""));
+      var a = 3;
+      if (a == 3) {
+        print("true");
+        var b = 'hello';
+      } else {
+        print("false");
+      }
+      print(b);"""));
   }
-  @Tag("Q11") @Test
+
+  @Tag("Q11")
+  @Test
   public void callAUserDefinedFunctionWithAnIf() {
     assertEquals("0\n7\n", execute("""
-            function f(x) {
-                if (x < 3) {
-                  return 0;
-                } else {
-                  return x;
-                }
-            }
-            print(f(2));
-            print(f(7));
-            """));
+      function f(x) {
+          if (x < 3) {
+            return 0;
+          } else {
+            return x;
+          }
+      }
+      print(f(2));
+      print(f(7));
+      """));
   }
-  @Tag("Q11") @Test
+
+  @Tag("Q11")
+  @Test
   public void callAUserDefinedFunctionWithAnIfAndAVariabe() {
     assertEquals("0\n7\n", execute("""
-            function f(x) {
-                if (x < 3) {
-                  var a = 0;
-                } else {
-                  var a = x;
-                }
-                return a;
-            }
-            print(f(2));
-            print(f(7));
-            """));
+      function f(x) {
+          if (x < 3) {
+            var a = 0;
+          } else {
+            var a = x;
+          }
+          return a;
+      }
+      print(f(2));
+      print(f(7));
+      """));
   }
-  
-  @Tag("Q12") @Test
+
+  @Tag("Q12")
+  @Test
   public void callFibo() {
     assertEquals("21\n", execute("""
-            function fibo(n) {
-                if (n < 2) {
-                  return 1
-                } else {
-                  return fibo(n - 1) + fibo(n - 2)
-                }
-              }
+      function fibo(n) {
+          if (n < 2) {
+            return 1
+          } else {
+            return fibo(n - 1) + fibo(n - 2)
+          }
+        }
 
-            print(fibo(7))
-            """));
+      print(fibo(7))
+      """));
   }
-  @Tag("Q12") @Test
+
+  @Tag("Q12")
+  @Test
   public void callRecursiveFunction() {
     assertEquals("24\n", execute("""
-            function fact(n) {
-              if (n < 1) {
-                return 1;
-              } else {
-                return n * fact(n - 1);
-              }
-            }
-            print(fact(4));
-            """));
+      function fact(n) {
+        if (n < 1) {
+          return 1;
+        } else {
+          return n * fact(n - 1);
+        }
+      }
+      print(fact(4));
+      """));
   }
-  @Tag("Q12") @Test
+
+  @Tag("Q12")
+  @Test
   public void callSeveralOperations() {
     assertEquals("5\n-1\n6\n0\n", execute("""
-            function calc(f, a, b) {
-             return f(a, b);
-            }
-            print(calc(+, 2, 3));
-            print(calc(-, 2, 3));
-            print(calc(*, 2, 3));
-            print(calc(/, 2, 3));
-            """));
+      function calc(f, a, b) {
+       return f(a, b);
+      }
+      print(calc(+, 2, 3));
+      print(calc(-, 2, 3));
+      print(calc(*, 2, 3));
+      print(calc(/, 2, 3));
+      """));
   }
-  @Tag("Q12") @Test
+
+  @Tag("Q12")
+  @Test
   public void callAndRewrite() {
     assertEquals("2\n9\n", execute("""
-            function f() { return op(); }
-            function op() { return 2; }
-            print(f());
-            function op() { return 9; }
-            print(f());
-            """));
+      function f() { return op(); }
+      function op() { return 2; }
+      print(f());
+      function op() { return 9; }
+      print(f());
+      """));
   }
-  
+  /*
   @Tag("Q13") @Test
   public void createAnObject() {
     assertEquals("""

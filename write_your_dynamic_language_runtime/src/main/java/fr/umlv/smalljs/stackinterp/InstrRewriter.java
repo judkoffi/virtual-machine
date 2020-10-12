@@ -310,9 +310,9 @@ public class InstrRewriter {
           visitor.visit(arg, env);
         }
         // emit the funcall
-        buffer.emit(FUNCALL)
-          .emit(methodCall.args()
-            .size());
+        buffer
+          .emit(FUNCALL)
+          .emit(methodCall.args().size());
       });
     return visitor;
   }
