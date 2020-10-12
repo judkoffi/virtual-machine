@@ -1,7 +1,7 @@
 package fr.umlv.smalljs.jvminterp;
 
+import fr.umlv.smalljs.rt.Failure;
 import fr.umlv.smalljs.rt.JSObject;
-import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 
 import java.lang.invoke.*;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -36,12 +36,14 @@ public class RT {
     return constant;
   }
 
+  /*
   public static CallSite bsm_funcall(Lookup lookup, String name, MethodType type) {
     //throw new UnsupportedOperationException("TODO bsm_funcall");
     var target = INVOKER.asCollector(Object[].class, type.parameterCount() - 2);
     target = target.asType(type);
     return new ConstantCallSite(target);
   }
+ */
 
   public static CallSite bsm_lookup(Lookup lookup, String name, MethodType type, String functionName) {
     // throw new UnsupportedOperationException("TODO bsm_lookup");
@@ -102,5 +104,54 @@ public class RT {
     //var combiner = insertArguments(METH_LOOKUP_MH, 1, name).asType(methodType(MethodHandle.class, Object.class));
     //var target = foldArguments(invoker(type), combiner);
     //return new ConstantCallSite(target);
+  }
+
+  public static CallSite bsm_funcall(Lookup lookup, String name, MethodType type) {
+    return new InliningCache(type);
+  }
+
+  private static class InliningCache extends MutableCallSite {
+    private static final MethodHandle SLOW_PATH, CHECK;
+
+    static {
+      var lookup = MethodHandles.lookup();
+      try {
+        SLOW_PATH = lookup.findVirtual(InliningCache.class, "slowPath", methodType(Object.class, Object.class, Object.class, Object[].class));
+        CHECK = lookup.findStatic(InliningCache.class, "check", methodType(boolean.class, Object.class, Object.class));
+      } catch (NoSuchMethodException | IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    public InliningCache(MethodType type) {
+      super(type);
+      setTarget(SLOW_PATH.bindTo(this)
+        .asCollector(Object[].class, type.parameterCount() - 2));
+    }
+
+    private static boolean check(Object o1, Object o2) {
+      return o1 == o2;
+    }
+
+    private Object slowPath(Object qualifier, Object receiver, Object[] args) {
+//            var jsObject = (JSObject)qualifier;
+//            return jsObject.invoke(receiver, args);
+
+      var jsObject = (JSObject) qualifier;
+      var mh = jsObject.getMethodHandle();
+
+      if (!mh.isVarargsCollector() && args.length != mh.type()
+        .parameterCount() - 1) {
+        throw new Failure("arguments doesn't match parameters count " + args.length + " " + (mh.type()
+          .parameterCount() - 1));
+      }
+
+      var test = CHECK.bindTo(jsObject);
+      var target = MethodHandles.dropArguments(mh.asType(type().dropParameterTypes(0, 1)), 0, Object.class);
+      var guard = MethodHandles.guardWithTest(test, target,
+        new InliningCache(type()).dynamicInvoker());
+      setTarget(guard);
+      return jsObject.invoke(receiver, args);
+    }
   }
 }

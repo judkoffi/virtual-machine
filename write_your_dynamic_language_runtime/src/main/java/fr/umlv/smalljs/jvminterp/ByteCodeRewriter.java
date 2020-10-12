@@ -128,7 +128,7 @@ public class ByteCodeRewriter {
         // do nothing
       })
       .when(Fun.class, (fun, env) -> {
-        // do nothing
+        // do nothinge.univ-mlv.fr/ens/Master/M2/2018-2019/VM/project.php
       })
       .when(Return.class, (_return, env) -> {
         // do nothing
@@ -180,6 +180,9 @@ public class ByteCodeRewriter {
         //throw new UnsupportedOperationException("TODO Block");
         // for each expression, visit them and POP it's not an instruction
         for (var expr : block.instrs()) {
+          var start = new Label();
+          mv.visitLabel(start);
+          mv.visitLineNumber(block.lineNumber(), start);
           visitor.visit(expr, env);
           if (!(expr instanceof Instr)) {
             mv.visitInsn(POP);
@@ -318,8 +321,7 @@ public class ByteCodeRewriter {
         // visit it
         //}
         // generate an invokedynamic that call BSM_METHODCALL
-      })
-    ;
+      });
     return visitor;
   }
 }
