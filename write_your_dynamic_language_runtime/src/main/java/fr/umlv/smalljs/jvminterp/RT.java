@@ -1,5 +1,6 @@
 package fr.umlv.smalljs.jvminterp;
 
+import fr.umlv.smalljs.rt.ArrayMap;
 import fr.umlv.smalljs.rt.Failure;
 import fr.umlv.smalljs.rt.JSObject;
 
@@ -136,8 +137,8 @@ public class RT {
     }
 
     private Object slowPath(Object qualifier, Object receiver, Object[] args) {
-//            var jsObject = (JSObject)qualifier;
-//            return jsObject.invoke(receiver, args);
+      //var jsObject = (JSObject)qualifier;
+      // return jsObject.invoke(receiver, args);
 
       var jsObject = (JSObject) qualifier;
       var mh = jsObject.getMethodHandle();
@@ -150,10 +151,62 @@ public class RT {
 
       var test = CHECK.bindTo(jsObject);
       var target = MethodHandles.dropArguments(mh.asType(type().dropParameterTypes(0, 1)), 0, Object.class);
-      var guard = MethodHandles.guardWithTest(test, target,
-        new InliningCache(type()).dynamicInvoker());
+      var guard = MethodHandles.guardWithTest(test, target, new InliningCache(type()).dynamicInvoker());
       setTarget(guard);
       return jsObject.invoke(receiver, args);
+    }
+  }
+
+  private static class InliningFieldCache extends MutableCallSite {
+    private static final MethodHandle SLOW_PATH, LAYOUT_CHECK, FAST_ACCESS;
+
+    static {
+      var lookup = MethodHandles.lookup();
+      try {
+        SLOW_PATH = lookup.findVirtual(InliningFieldCache.class, "slowPath", methodType(Object.class, Object.class));
+        LAYOUT_CHECK = lookup.findStatic(InliningFieldCache.class, "layoutCheck", methodType(boolean.class, ArrayMap.Layout.class, Object.class));
+        FAST_ACCESS = lookup.findVirtual(JSObject.class, "fastAccess", methodType(Object.class, int.class));
+      } catch (NoSuchMethodException | IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    private final String fieldName;
+
+    public InliningFieldCache(MethodType type, String fieldName) {
+      super(type);
+      this.fieldName = fieldName;
+      setTarget(SLOW_PATH.bindTo(this));
+    }
+
+    @SuppressWarnings("unused")  // called by a MH
+    private static boolean layoutCheck(ArrayMap.Layout layout, Object o) {
+      return layout == ((JSObject) o).getLayout();
+    }
+
+    @SuppressWarnings("unused")  // called by a MH
+    private Object slowPath(Object receiver) {
+      var jsObject = (JSObject) receiver;
+
+      // classical access to the value
+      // var value = jsObject.lookup(fieldName);
+
+      // fast access
+      var layout = jsObject.getLayout();
+      var slot = layout.slot(fieldName);   // may be -1 !
+      
+      if (slot == -1) {
+        return UNDEFINED;
+      }
+
+      var value = jsObject.fastAccess(slot);
+
+      //GWT
+      var test = LAYOUT_CHECK.bindTo(jsObject);
+      var target = MethodHandles.insertArguments(FAST_ACCESS, 1, slot)
+        .asType(type());
+      var guard = MethodHandles.guardWithTest(test, target, getTarget());
+      return value;
     }
   }
 }
