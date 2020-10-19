@@ -328,109 +328,122 @@ public class JVMInterpreterTests {
       print(f());
       """));
   }
-  /*
-  @Tag("Q13") @Test
+
+  @Tag("Q13")
+  @Test
   public void createAnObject() {
     assertEquals("""
-            { // object
-              x: 1
-              y: 2
-              proto: null
-            }
-            """,
-        execute("""
-                var o = {
-                    x: 1,
-                    y: 2
-                };
-                print(o);
-                """));
+        { // object
+          x: 1
+          y: 2
+          proto: null
+        }
+        """,
+      execute("""
+        var o = {
+            x: 1,
+            y: 2
+        };
+        print(o);
+        """));
   }
-  
-  @Tag("Q14") @Test
+
+
+  @Tag("Q14")
+  @Test
   public void createAnObjectFromAVariableValue() {
     assertEquals("""
-            { // object
-              x: 1
-              y: 2
-              proto: null
-            }
-            """,
-        execute("""
-                var a = 1;
-                var o = {
-                  x: a,
-                  y: a + 1
-                }
-                print(o);
-                """));
+        { // object
+          x: 1
+          y: 2
+          proto: null
+        }
+        """,
+      execute("""
+        var a = 1;
+        var o = {
+          x: a,
+          y: a + 1
+        }
+        print(o);
+        """));
   }
-  @Tag("Q14") @Test
+
+  @Tag("Q14")
+  @Test
   public void createAnObjectEvaluationOrder() {
     assertEquals(
-        "a\nb\n",
-        execute("""
-                var foo = {
-                  a: print('a'),
-                  b: print('b')
-                };"""));
+      "a\nb\n",
+      execute("""
+        var foo = {
+          a: print('a'),
+          b: print('b')
+        };"""));
   }
-  
-  @Tag("Q15") @Test
+
+  @Tag("Q15")
+  @Test
   public void objectGetAFieldValue() {
     assertEquals(
-        "John\n",
-        execute("""
-                var john = { name: "John" };
-                print(john.name);
-                """));
+      "John\n",
+      execute("""
+        var john = { name: "John" };
+        print(john.name);
+        """));
   }
-  @Tag("Q15") @Test
+
+  @Tag("Q15")
+  @Test
   public void objectGetAFieldNoValue() {
     assertEquals(
-        "undefined\n",
-        execute("""
-                var john = { name: "John" };
-                print(john.foo);
-                """));
+      "undefined\n",
+      execute("""
+        var john = { name: "John" };
+        print(john.foo);
+        """));
   }
-  
-  @Tag("Q16") @Test
+
+
+  @Tag("Q16")
+  @Test
   public void objectSetAFieldValue() {
     assertEquals(
-        "Jane\n",
-        execute("""
-                var john = { name: "John" };
-                john.name = "Jane";
-                print(john.name);
-                """));
+      "Jane\n",
+      execute("""
+        var john = { name: "John" };
+        john.name = "Jane";
+        print(john.name);
+        """));
   }
-  @Tag("Q16") @Test
+
+  @Tag("Q16")
+  @Test
   public void objectGetAndSetAField() {
     assertEquals(
-        "2\n9\n",
-        execute("""
-                function f(o) { return o.field; }
-                var obj = { field: 2 };
-                print(f(obj));
-                obj.field = 9;
-                print(f(obj));
-                """));
+      "2\n9\n",
+      execute("""
+        function f(o) { return o.field; }
+        var obj = { field: 2 };
+        print(f(obj));
+        obj.field = 9;
+        print(f(obj));
+        """));
   }
-  
-  @Tag("Q17") @Test
+
+  @Tag("Q17")
+  @Test
   public void objectCallAMethod() {
     assertEquals(
-        "hello 42\nhello 42\n",
-        execute("""
-                var object = {
-                  bar: "hello",
-                  foo: function(x) {
-                         print(this.bar, x);
-                       }
-                };
-                object.foo(42);
-                object.foo(42);
-                """));
-  }*/
+      "hello 42\nhello 42\n",
+      execute("""
+        var object = {
+          bar: "hello",
+          foo: function(x) {
+                 print(this.bar, x);
+               }
+        };
+        object.foo(42);
+        object.foo(42);
+        """));
+  }
 }

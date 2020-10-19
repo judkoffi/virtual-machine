@@ -7,6 +7,8 @@ import java.lang.invoke.*;
 import java.lang.invoke.MethodHandles.Lookup;
 
 import static fr.umlv.smalljs.rt.JSObject.UNDEFINED;
+import static java.lang.invoke.MethodHandles.insertArguments;
+import static java.lang.invoke.MethodHandles.invoker;
 import static java.lang.invoke.MethodType.methodType;
 
 public class RT {
@@ -50,7 +52,7 @@ public class RT {
     var classLoader = (FunClassLoader) lookup.lookupClass()
       .getClassLoader();
     var globalEnv = classLoader.getGlobal();
-    return new ConstantCallSite(MethodHandles.insertArguments(LOOKUP, 0, globalEnv, functionName));
+    return new ConstantCallSite(insertArguments(LOOKUP, 0, globalEnv, functionName));
   }
 
 
@@ -70,7 +72,7 @@ public class RT {
     var classLoader = (FunClassLoader) lookup.lookupClass()
       .getClassLoader();
     var globalEnv = classLoader.getGlobal();
-    return new ConstantCallSite(MethodHandles.insertArguments(REGISTER, 0, globalEnv, functionName));
+    return new ConstantCallSite(insertArguments(REGISTER, 0, globalEnv, functionName));
   }
 
   @SuppressWarnings("unused")  // used by a method handle
@@ -84,13 +86,13 @@ public class RT {
   }
 
   public static CallSite bsm_get(Lookup lookup, String name, MethodType type, String fieldName) {
-    throw new UnsupportedOperationException("TODO bsm_get");
-    //TODO
+    //throw new UnsupportedOperationException("TODO bsm_get");
+    return new ConstantCallSite(insertArguments(LOOKUP, 1, fieldName).asType(type));
   }
 
   public static CallSite bsm_set(Lookup lookup, String name, MethodType type, String fieldName) {
-    throw new UnsupportedOperationException("TODO bsm_set");
-    //TODO
+    //throw new UnsupportedOperationException("TODO bsm_set");
+    return new ConstantCallSite(insertArguments(REGISTER, 1, fieldName).asType(type));
   }
 
   @SuppressWarnings("unused")  // used by a method handle
@@ -100,10 +102,10 @@ public class RT {
   }
 
   public static CallSite bsm_methodcall(Lookup lookup, String name, MethodType type) {
-    throw new UnsupportedOperationException("TODO bsm_methodcall");
-    //var combiner = insertArguments(METH_LOOKUP_MH, 1, name).asType(methodType(MethodHandle.class, Object.class));
-    //var target = foldArguments(invoker(type), combiner);
-    //return new ConstantCallSite(target);
+    var combiner = MethodHandles.insertArguments(METH_LOOKUP_MH, 1, name)
+      .asType(methodType(MethodHandle.class, Object.class));
+    var target = MethodHandles.foldArguments(invoker(type), combiner);
+    return new ConstantCallSite(target);
   }
 
   public static CallSite bsm_funcall(Lookup lookup, String name, MethodType type) {
